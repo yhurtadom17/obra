@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestión</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: linear-gradient(135deg, #e63946 0%, #d62839 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 20px rgba(230, 57, 70, 0.3);
+        }
+
+        h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            opacity: 0.9;
+            font-size: 0.95em;
+        }
+
+        .section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            color: #e63946;
+            font-size: 1.4em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        input, select, button {
+            padding: 12px 20px;
+            border: 2px solid #e8e8e8;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #e63946;
+            box-shadow: 0 0 0 3px rgba(230, 57, 70, 0.1);
+        }
+
+        input[type="text"], input[type="date"], input[type="number"], select {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        button {
+            background: #e63946;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        button:hover {
+            background: #d62839;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(230, 57, 70, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-success {
+            background: #28a745;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .empresa-selector {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .empresa-selector select {
+            flex: 2;
+        }
+
+        .search-box {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(230, 57, 70, 0.2);
+            border-color: #e63946;
+        }
+
+        .card-title {
+            font-size: 1.2em;
+            color: #333;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .card-info {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .card-total {
+            color: #e63946;
+            font-size: 1.1em;
+            font-weight: 700;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #e8e8e8;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: white;
+            max-width: 800px;
+            width: 90%;
+            max-height: 90vh;
+            margin: 5vh auto;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @keyframes slideIn {
+            from { 
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to { 
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #e63946 0%, #d62839 100%);
+            color: white;
+            padding: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.5em;
+            font-weight: 600;
+        }
+
+        .close-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(90deg);
+        }
+
+        .modal-body {
+            padding: 25px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .purchase-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-left: 4px solid #e63946;
+        }
+
+        .purchase-date {
+            color: #666;
+            font-size: 0.85em;
+            margin-bottom: 5px;
+        }
+
+        .purchase-desc {
+            color: #333;
+            font-weight: 500;
+            margin-bottom: 3px;
+        }
+
+        .purchase-price {
+            color: #e63946;
+            font-weight: 700;
+        }
+
+        .purchase-quantity {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .totals-summary {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 1.1em;
+        }
+
+        .total-row.main {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #e63946;
+            border-top: 2px solid #dee2e6;
+            padding-top: 15px;
+            margin-top: 10px;
+        }
+
+        .lunch-list {
+            list-style: none;
+        }
+
+        .lunch-item {
+            background: #f8f9fa;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+
+        .delete-btn:hover {
+            background: #c82333;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .input-group {
+                flex-direction: column;
+            }
+
+            input, select, button {
+                width: 100%;
+            }
+
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 2vh auto;
+                max-height: 96vh;
+            }
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            background: #f0f0f0;
+            color: #333;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn.active {
+            background: #e63946;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Sistema de Gestión</h1>
+            <p class="subtitle">Gestiona empresas, clientes y compras de forma eficiente</p>
+        </header>
+
+        <!-- Selector de Empresa -->
+        <div class="section">
+            <h2 class="section-title">🏢 Gestión de Empresas</h2>
+            <div class="input-group">
+                <input type="text" id="nuevaEmpresa" placeholder="Nombre de la nueva empresa">
+                <button onclick="agregarEmpresa()">Agregar Empresa</button>
+            </div>
+            <div class="empresa-selector">
+                <select id="empresaSelector" onchange="cambiarEmpresa()">
+                    <option value="">Selecciona una empresa</option>
+                </select>
+                <button class="btn-success" onclick="exportarExcel()">📥 Exportar a Excel</button>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="section" id="mainContent" style="display: none;">
+            <div class="tab-buttons">
+                <button class="tab-btn active" onclick="cambiarTab('clientes')">👥 Clientes</button>
+                <button class="tab-btn" onclick="cambiarTab('almuerzos')">🍽️ Almuerzos</button>
+            </div>
+
+            <!-- Tab de Clientes -->
+            <div class="tab-content active" id="tab-clientes">
+                <h2 class="section-title">👥 Gestión de Clientes</h2>
+                <div class="input-group">
+                    <input type="text" id="nuevoCliente" placeholder="Nombre del cliente">
+                    <button onclick="agregarCliente()">Agregar Cliente</button>
+                </div>
+
+                <input type="text" id="buscarCliente" class="search-box" placeholder="🔍 Buscar cliente..." oninput="buscarClientes()">
+
+                <div class="cards-grid" id="clientesGrid"></div>
+            </div>
+
+            <!-- Tab de Almuerzos -->
+            <div class="tab-content" id="tab-almuerzos">
+                <h2 class="section-title">🍽️ Lista de Almuerzos</h2>
+                <div class="input-group">
+                    <input type="date" id="fechaAlmuerzo">
+                    <input type="text" id="nombreAlmuerzo" placeholder="Nombre de la persona">
+                    <button onclick="agregarAlmuerzo()">Agregar a Lista</button>
+                </div>
+                <ul class="lunch-list" id="listaAlmuerzos"></ul>
+            </div>
+        </div>
+
+        <!-- Modal de Cliente -->
+        <div class="modal" id="clienteModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title" id="modalClienteNombre"></h3>
+                    <button class="close-btn" onclick="cerrarModal()">×</button>
+                </div>
+                <div class="modal-body">
+                    <h3 style="color: #e63946; margin-bottom: 15px;">➕ Agregar Compra</h3>
+                    <div class="input-group">
+                        <input type="date" id="fechaCompra">
+                        <input type="text" id="descripcionCompra" placeholder="Descripción del producto">
+                        <input type="number" id="cantidadCompra" placeholder="Cantidad" min="1" value="1">
+                        <input type="number" id="precioCompra" placeholder="Precio unitario" step="0.01">
+                        <button onclick="agregarCompra()">Agregar</button>
+                    </div>
+                    <div style="background: #fff3cd; padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 0.95em;">
+                        <strong>Total a agregar:</strong> <span id="totalPreview">$0.00</span>
+                    </div>
+
+                    <h3 style="color: #e63946; margin: 25px 0 15px;">📜 Historial de Compras</h3>
+                    <div id="listaCompras"></div>
+
+                    <div class="totals-summary">
+                        <div class="total-row">
+                            <span>Total de Compras:</span>
+                            <span id="totalCompras">$0.00</span>
+                        </div>
+                        <div class="total-row">
+                            <span>Total Pagado:</span>
+                            <span id="totalPagado">$0.00</span>
+                        </div>
+                        <div class="total-row main">
+                            <span>Saldo Actual:</span>
+                            <span id="saldoActual">$0.00</span>
+                        </div>
+                    </div>
+
+                    <h3 style="color: #e63946; margin: 25px 0 15px;">💰 Registrar Pago</h3>
+                    <div class="input-group">
+                        <input type="number" id="montoPago" placeholder="Monto del pago" step="0.01">
+                        <button class="btn-success" onclick="registrarPago()">Registrar Pago</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let datos = {
+            empresas: [],
+            empresaActual: null
+        };
+
+        let clienteActual = null;
+
+        // Inicializar
+        function init() {
+            cargarDatos();
+            setFechaActual();
+            actualizarSelectorEmpresas();
+        }
+
+        function setFechaActual() {
+            const hoy = new Date().toISOString().split('T')[0];
+            document.getElementById('fechaCompra').value = hoy;
+            document.getElementById('fechaAlmuerzo').value = hoy;
+        }
+
+        // Gestión de datos en localStorage
+        function guardarDatos() {
+            localStorage.setItem('sistemaGestion', JSON.stringify(datos));
+        }
+
+        function cargarDatos() {
+            const guardado = localStorage.getItem('sistemaGestion');
+            if (guardado) {
+                datos = JSON.parse(guardado);
+            }
+        }
+
+        // Empresas
+        function agregarEmpresa() {
+            const input = document.getElementById('nuevaEmpresa');
+            const nombre = input.value.trim();
+            
+            if (!nombre) {
+                alert('Por favor ingresa un nombre para la empresa');
+                return;
+            }
+
+            datos.empresas.push({
+                id: Date.now(),
+                nombre: nombre,
+                clientes: [],
+                almuerzos: []
+            });
+
+            guardarDatos();
+            actualizarSelectorEmpresas();
+            input.value = '';
+        }
+
+        function actualizarSelectorEmpresas() {
+            const selector = document.getElementById('empresaSelector');
+            selector.innerHTML = '<option value="">Selecciona una empresa</option>';
+            
+            datos.empresas.forEach(empresa => {
+                const option = document.createElement('option');
+                option.value = empresa.id;
+                option.textContent = empresa.nombre;
+                selector.appendChild(option);
+            });
+        }
+
+        function cambiarEmpresa() {
+            const selector = document.getElementById('empresaSelector');
+            const empresaId = parseInt(selector.value);
+            
+            if (empresaId) {
+                datos.empresaActual = datos.empresas.find(e => e.id === empresaId);
+                document.getElementById('mainContent').style.display = 'block';
+                mostrarClientes();
+                mostrarAlmuerzos();
+            } else {
+                datos.empresaActual = null;
+                document.getElementById('mainContent').style.display = 'none';
+            }
+        }
+
+        // Clientes
+        function agregarCliente() {
+            if (!datos.empresaActual) {
+                alert('Selecciona una empresa primero');
+                return;
+            }
+
+            const input = document.getElementById('nuevoCliente');
+            const nombre = input.value.trim();
+            
+            if (!nombre) {
+                alert('Por favor ingresa un nombre para el cliente');
+                return;
+            }
+
+            datos.empresaActual.clientes.push({
+                id: Date.now(),
+                nombre: nombre,
+                compras: [],
+                pagos: 0
+            });
+
+            guardarDatos();
+            mostrarClientes();
+            input.value = '';
+        }
+
+        function mostrarClientes() {
+            const grid = document.getElementById('clientesGrid');
+            
+            if (!datos.empresaActual || datos.empresaActual.clientes.length === 0) {
+                grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><p>No hay clientes registrados</p></div>';
+                return;
+            }
+
+            const busqueda = document.getElementById('buscarCliente').value.toLowerCase();
+            const clientesFiltrados = datos.empresaActual.clientes.filter(c => 
+                c.nombre.toLowerCase().includes(busqueda)
+            );
+
+            grid.innerHTML = '';
+            clientesFiltrados.forEach(cliente => {
+                const totalCompras = cliente.compras.reduce((sum, c) => sum + c.precio, 0);
+                const saldo = totalCompras - cliente.pagos;
+                
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.onclick = () => abrirModalCliente(cliente.id);
+                card.innerHTML = `
+                    <div class="card-title">${cliente.nombre}</div>
+                    <div class="card-info">Compras: ${cliente.compras.length}</div>
+                    <div class="card-total">Debe: $${saldo.toFixed(2)}</div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function buscarClientes() {
+            mostrarClientes();
+        }
+
+        // Modal
+        function abrirModalCliente(clienteId) {
+            clienteActual = datos.empresaActual.clientes.find(c => c.id === clienteId);
+            document.getElementById('modalClienteNombre').textContent = clienteActual.nombre;
+            actualizarModalCompras();
+            document.getElementById('clienteModal').style.display = 'block';
+            setFechaActual();
+            
+            // Agregar listeners para calcular el total en tiempo real
+            document.getElementById('cantidadCompra').addEventListener('input', actualizarTotalPreview);
+            document.getElementById('precioCompra').addEventListener('input', actualizarTotalPreview);
+        }
+
+        function actualizarTotalPreview() {
+            const cantidad = parseInt(document.getElementById('cantidadCompra').value) || 0;
+            const precio = parseFloat(document.getElementById('precioCompra').value) || 0;
+            const total = cantidad * precio;
+            document.getElementById('totalPreview').textContent = `${total.toFixed(2)}`;
+        }
+
+        function cerrarModal() {
+            document.getElementById('clienteModal').style.display = 'none';
+            clienteActual = null;
+            mostrarClientes();
+        }
+
+        // Compras
+        function agregarCompra() {
+            if (!clienteActual) return;
+
+            const fecha = document.getElementById('fechaCompra').value;
+            const descripcion = document.getElementById('descripcionCompra').value.trim();
+            const cantidad = parseInt(document.getElementById('cantidadCompra').value);
+            const precioUnitario = parseFloat(document.getElementById('precioCompra').value);
+
+            if (!fecha || !descripcion || isNaN(cantidad) || cantidad <= 0 || isNaN(precioUnitario) || precioUnitario <= 0) {
+                alert('Por favor completa todos los campos correctamente');
+                return;
+            }
+
+            const precioTotal = cantidad * precioUnitario;
+
+            clienteActual.compras.push({
+                fecha: fecha,
+                descripcion: descripcion,
+                cantidad: cantidad,
+                precioUnitario: precioUnitario,
+                precio: precioTotal
+            });
+
+            guardarDatos();
+            actualizarModalCompras();
+            
+            document.getElementById('descripcionCompra').value = '';
+            document.getElementById('cantidadCompra').value = '1';
+            document.getElementById('precioCompra').value = '';
+            document.getElementById('totalPreview').textContent = '$0.00';
+        }
+
+        function actualizarModalCompras() {
+            const lista = document.getElementById('listaCompras');
+            
+            if (clienteActual.compras.length === 0) {
+                lista.innerHTML = '<div class="empty-state"><p>No hay compras registradas</p></div>';
+            } else {
+                // Ordenar por fecha descendente
+                const comprasOrdenadas = [...clienteActual.compras].sort((a, b) => 
+                    new Date(b.fecha) - new Date(a.fecha)
+                );
+
+                lista.innerHTML = comprasOrdenadas.map(compra => `
+                    <div class="purchase-item">
+                        <div class="purchase-date">${new Date(compra.fecha).toLocaleDateString('es-ES')}</div>
+                        <div class="purchase-desc">${compra.descripcion}</div>
+                        ${compra.cantidad ? `<div class="purchase-quantity">Cantidad: ${compra.cantidad} × ${compra.precioUnitario.toFixed(2)}</div>` : ''}
+                        <div class="purchase-price">Total: ${compra.precio.toFixed(2)}</div>
+                    </div>
+                `).join('');
+            }
+
+            // Actualizar totales
+            const totalCompras = clienteActual.compras.reduce((sum, c) => sum + c.precio, 0);
+            const totalPagado = clienteActual.pagos;
+            const saldo = totalCompras - totalPagado;
+
+            document.getElementById('totalCompras').textContent = `$${totalCompras.toFixed(2)}`;
+            document.getElementById('totalPagado').textContent = `$${totalPagado.toFixed(2)}`;
+            document.getElementById('saldoActual').textContent = `$${saldo.toFixed(2)}`;
+        }
+
+        function registrarPago() {
+            if (!clienteActual) return;
+
+            const monto = parseFloat(document.getElementById('montoPago').value);
+
+            if (isNaN(monto) || monto <= 0) {
+                alert('Por favor ingresa un monto válido');
+                return;
+            }
+
+            clienteActual.pagos += monto;
+            guardarDatos();
+            actualizarModalCompras();
+            document.getElementById('montoPago').value = '';
+        }
+
+        // Almuerzos
+        function agregarAlmuerzo() {
+            if (!datos.empresaActual) return;
+
+            const fecha = document.getElementById('fechaAlmuerzo').value;
+            const nombre = document.getElementById('nombreAlmuerzo').value.trim();
+
+            if (!fecha || !nombre) {
+                alert('Por favor completa todos los campos');
+                return;
+            }
+
+            if (!datos.empresaActual.almuerzos) {
+                datos.empresaActual.almuerzos = [];
+            }
+
+            datos.empresaActual.almuerzos.push({
+                id: Date.now(),
+                fecha: fecha,
+                nombre: nombre
+            });
+
+            guardarDatos();
+            mostrarAlmuerzos();
+            document.getElementById('nombreAlmuerzo').value = '';
+        }
+
+        function mostrarAlmuerzos() {
+            const lista = document.getElementById('listaAlmuerzos');
+            
+            if (!datos.empresaActual || !datos.empresaActual.almuerzos || datos.empresaActual.almuerzos.length === 0) {
+                lista.innerHTML = '<div class="empty-state"><p>No hay almuerzos registrados</p></div>';
+                return;
+            }
+
+            const almuerzosOrdenados = [...datos.empresaActual.almuerzos].sort((a, b) => 
+                new Date(b.fecha) - new Date(a.fecha)
+            );
+
+            lista.innerHTML = almuerzosOrdenados.map(almuerzo => `
+                <li class="lunch-item">
+                    <span><strong>${almuerzo.nombre}</strong> - ${new Date(almuerzo.fecha).toLocaleDateString('es-ES')}</span>
+                    <button class="delete-btn" onclick="eliminarAlmuerzo(${almuerzo.id})">Eliminar</button>
+                </li>
+            `).join('');
+        }
+
+        function eliminarAlmuerzo(id) {
+            if (!datos.empresaActual) return;
+            datos.empresaActual.almuerzos = datos.empresaActual.almuerzos.filter(a => a.id !== id);
+            guardarDatos();
+            mostrarAlmuerzos();
+        }
+
+        // Tabs
+        function cambiarTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tab).classList.add('active');
+        }
+
+        // Exportar a Excel
+        function exportarExcel() {
+            if (datos.empresas.length === 0) {
+                alert('No hay empresas para exportar');
+                return;
+            }
+
+            const wb = XLSX.utils.book_new();
+
+            datos.empresas.forEach(empresa => {
+                const datosHoja = [];
+                datosHoja.push(['Cliente', 'Total Debe']);
+
+                empresa.clientes.forEach(cliente => {
+                    const totalCompras = cliente.compras.reduce((sum, c) => sum + c.precio, 0);
+                    const saldo = totalCompras - cliente.pagos;
+                    datosHoja.push([cliente.nombre, saldo.toFixed(2)]);
+                });
+
+                const ws = XLSX.utils.aoa_to_sheet(datosHoja);
+                XLSX.utils.book_append_sheet(wb, ws, empresa.nombre.substring(0, 31));
+            });
+
+            XLSX.writeFile(wb, 'reporte_empresas.xlsx');
+        }
+
+        // Cerrar modal al hacer clic fuera
+        window.onclick = function(event) {
+            const modal = document.getElementById('clienteModal');
+            if (event.target === modal) {
+                cerrarModal();
+            }
+        }
+
+        // Iniciar aplicación
+        init();
+    </script>
+</body>
+</html>
